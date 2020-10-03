@@ -1,7 +1,8 @@
 # COMP445
+
 Data Networks (Coursework) - Fall 2020 (COVID Edition)
 
-Contributors: 
+Contributors:
 Paul Micu |
 Roy Saliba |
 Mila Roisin |
