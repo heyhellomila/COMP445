@@ -1,86 +1,158 @@
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.Socket;
 import java.net.URL;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.Scanner;
 
+public class httpc {
 
-public class Httpc {
-	
-	public static void main(String[] args) throws MalformedURLException  {
-		getExample();
+	/*	System.out.println(method);
+		if(verbose)
+			System.out.println("Verbose");
+		else 
+			System.out.println("not Verbose");
 
-		//post1Example();
-		//post2Example();
-		//post3Example();
-		//getRedirectExample();
-
-		/*
-		System.out.println("Exercise 1:\nCommand line input:\n");
-
-		for(int i = 0; i < args.length; i++){
-			System.out.println(args[i]);
-		}
+		for(String s:headers)
+			System.out.println(s);
+		System.out.println(data);
+		System.out.println(url);
 		
-		System.out.println("\nExercise 2:\nURL parsing:\n");
-
-		String urlString1 = "http://www.example.com/docs/resource1.html";
-		URL url1 = new URL(urlString1);
-
-		String urlString2 = "http://www.example.com:1080/docs/resource1.html";
-		URL url2 = new URL(urlString2);
-
-		String urlString3 = "http://www.example.com/docs/resource1.html?key1=value1&key2=value2";
-		URL url3 = new URL(urlString3);
-
-		System.out.println("URL 1: " + urlString1);
-		System.out.println("Host: " + url1.getHost());
-		System.out.println("Path: " + url1.getPath());
-		System.out.println("Port: " + url1.getPort());
-		System.out.println("Default port: " + url1.getDefaultPort());
-		System.out.println("File: " + url1.getFile());
-		System.out.println("Protocol: " + url1.getProtocol());
-		System.out.println("Query: " + url1.getQuery() + "\n");
-
-		System.out.println("URL 2: " + urlString2);
-		System.out.println("Host: " + url2.getHost());
-		System.out.println("Path: " + url2.getPath());
-		System.out.println("Port: " + url2.getPort());
-		System.out.println("Default port: " + url2.getDefaultPort());
-		System.out.println("File: " + url2.getFile());
-		System.out.println("Protocol: " + url2.getProtocol());
-		System.out.println("Query: " + url2.getQuery() + "\n");
-
-		System.out.println("URL 3: " + urlString3);
-		System.out.println("Host: " + url3.getHost());
-		System.out.println("Path: " + url3.getPath());
-		System.out.println("Port: " + url3.getPort());
-		System.out.println("Default port: " + url3.getDefaultPort());
-		System.out.println("File: " + url3.getFile());
-		System.out.println("Protocol: " + url3.getProtocol());
-		System.out.println("Query: " + url3.getQuery() + "\n");
 		*/
+	
+	private final static String help_general_text="httpc is a curl-like application but supports HTTP protocol only."+"\n\n"+
+	"Usage:"+"\n\t"+"httpc command [arguments]"+"\n"+"The commands are:"+"\n\t"+"get\texecutes a HTTP GET request and prints the response."+"\n\t"+"post"+"\t"+"executes a HTTP POST request and prints the response."+"\n\t"+"help"+"\t"+"prints this screen."+"\n\n"+"Use  for more information about a command.";
+
+	private final static String help_get_usage_text = "usage: httpc get [-v] [-h key:value] URL\n\nGet executes a HTTP GET request for a given URL.\n\n\t-v\t\tPrints the detail of the response such as protocol, status, and headers.\n\t-h key:value\tAssociates headers to HTTP Request with the format 'key:value'.";
+
+	private final static String help_post_usage_text = "usage: httpc post [-v] [-h key:value] [-d inline-data] [-f file] URL"+"\n\n"+
+	"Post executes a HTTP POST request for a given URL with inline data or from file."+"\n\n\t"+"-v"+"\t\t"+"Prints the detail of the response such as protocol, status, and headers."+"\n\t"+"-h key:value\tAssociates headers to HTTP Request with the format 'key:value'."+"\n\t"+"-d string"+"\t"+"Associates an inline data to the body HTTP POST request."+"\n\t"+"-f file\t\tAssociates the content of a file to the body HTTP POST request"+"\n\n"+"Either [-d] or [-f] can be used but not both.";
+	
+	private final static String error_get_format="Get Error";
+	private final static String error_post_format="Post Error";
+	private final static String error_argument_format="Argument Error";
+
+	public static void main(String[] args) throws MalformedURLException  {
+		
+		boolean verbose=false;
+		String method=null;
+		ArrayList<String> headers=new ArrayList<String>();
+		String inlineData=null;
+		String filePath=null;
+		String fileData=null;
+		String url=null;
+		boolean vPresent=false;
+		boolean dPresent=false;
+		boolean fPresent=false;
+		boolean validated=true;
+		
+
+		for(int i=0; i<args.length ; i++){
+			if((args[i].toLowerCase()).equals("get")){
+				if(method != null){					
+					validated=false;
+					}
+				method="get";
+				}
+			else if((args[i].toLowerCase()).equals("post")){
+				if(method != null){					
+					validated=false;
+				}
+				method="post";}
+			else if((args[i].toLowerCase()).equals("help")){
+				System.out.println(help_general_text);}
+			else if(args[i].equals("-v")){
+				if(vPresent){
+					validated=false;
+					}
+				vPresent=true;
+				verbose=true;
+			}
+			else if(args[i].equals("-h")){
+				i++;
+				headers.add(args[i]);
+			}
+			else if(args[i].equals("-d")){
+				if(dPresent)
+					validated=false;
+				dPresent=true;
+				inlineData=args[i++];
+			}
+			else if(args[i].equals("-f")){
+				if(fPresent)
+					validated=false;
+				fPresent=true;
+				i++;
+				filePath=args[i];
+			}
+			else
+				url=args[i];
+		}
+		if(!validated)
+			System.out.println(error_argument_format);
+		else {
+			
+			if(method.equals("get")){
+				if(inlineData != null || filePath != null)
+					System.out.println(error_get_format);
+				else{
+					getRequest(verbose, headers, url);}
+			}
+			if(method.equals("post")){
+				if(inlineData != null && filePath == null)
+					postRequest(verbose, headers, inlineData, url);
+					
+				else if(inlineData == null && filePath != null){
+					fileData=readFile(filePath);
+					postRequest(verbose, headers, fileData, url);
+					}
+				else
+					System.out.println(error_get_format);
+			}
+			
+		}
 	}
 
-	public static void httpc(String path, String host, String query) {
+	public static String readFile(String file_path){
+		String data=null;
+		File file = new File(file_path);
+		try{
+			Scanner scanner = new Scanner(file);
+			while(scanner.hasNextLine()) {
+				 data= scanner.nextLine();
+				System.out.println(data);
+			}
+			scanner.close();
+		} catch (Exception e) {
+				System.out.println("We didn't find a file. Please validate the path.");
+		}
+		return data;
+	}
+
+	public static void getRequest(boolean verbose, ArrayList<String> headers, String url)  throws MalformedURLException  {
+		URL urlObj = new URL(url);
+		System.out.println("URL Host:"+urlObj.getHost());
+		System.out.println("URL File:"+urlObj.getFile());
+			
 		try {
-			Socket socket = new Socket(host, 80);
+			Socket socket = new Socket( urlObj.getHost(), 80);
 			
 			InputStream inputStream = socket.getInputStream();
 			OutputStream outputStream = socket.getOutputStream();
-			
-			String request = "";
-			if(query == null) {
-				request = "GET " + path + " HTTP/1.0\r\n\r\n";
-			} else {
-				request = "GET " + path + "?" +query +" HTTP/1.0\r\n\r\n";
-			}
+						
+			StringBuilder request = new StringBuilder();
+		 	request.append("GET /" + urlObj.getFile() +" HTTP/1.0\n");
+			request.append("Host: " + urlObj.getHost()+"\n");
+			for(String header: headers)
+				request.append(header+"\n");
 
-			//http://postman-echo.com:100/wikypedia/article/1?key=value
-			
-			outputStream.write(request.getBytes());
+			System.out.println(request.toString());
+
+			outputStream.write(request.toString().getBytes());
 			outputStream.flush();
-			
 			StringBuilder response = new StringBuilder();
 			
 			int data = inputStream.read();
@@ -89,37 +161,12 @@ public class Httpc {
 				response.append((char) data);
 				data = inputStream.read();
 			}
-			
-			System.out.println(request);
-			System.out.println(response);
-			socket.close();
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 
-	public static void getExample() {
-		try {
-			Socket socket = new Socket("2cbe98bfc038.ngrok.io", 80);
-			
-			InputStream inputStream = socket.getInputStream();
-			OutputStream outputStream = socket.getOutputStream();
-			
-			String request = "GET " +  "/get HTTP/1.0\r\nHost: 2cbe98bfc038.ngrok.io\r\n\r\n";
-			
-			//http://postman-echo.com:100/wikypedia/article/1?key=value
-
-			outputStream.write(request.getBytes());
-			outputStream.flush();
-			StringBuilder response = new StringBuilder();
-			
-			int data = inputStream.read();
-			
-			while(data != -1) {
-				response.append((char) data);
-				data = inputStream.read();
+			if(verbose == true){
+				for(String header: headers)
+					System.out.println(header);
 			}
+			
 			System.out.println(response);
 			socket.close();
 			
@@ -128,8 +175,8 @@ public class Httpc {
 		}
 	}
 
-	public static void post1Example() {
-		try {
+	public static void postRequest(boolean verbose, ArrayList<String> headers, String fileData, String url) throws MalformedURLException{
+		/*try {
 			Socket socket = new Socket("httpbin.org", 80);
 			
 			InputStream inputStream = socket.getInputStream();
@@ -160,7 +207,7 @@ public class Httpc {
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
+		}*/
 	}
 
 	public static void post2Example() {
@@ -240,35 +287,16 @@ public class Httpc {
 			
 			System.out.println(response);
 			socket.close();
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	public static void getRedirectExample() {
-		try {
-			Socket socket = new Socket("localhost", 80);
-			
-			InputStream inputStream = socket.getInputStream();
-			OutputStream outputStream = socket.getOutputStream();
-			
-
-			//String request = "GET / HTTP/1.0\r\nHost: www.facebook.com\r\n\r\n";
-			String request = "GET /get HTTP/1.0\r\n\r\n";
-			//String request = "GET / HTTP/1.0\r\n\r\n";
-			
-			outputStream.write(request.getBytes());
-			outputStream.flush();
-			
-			StringBuilder response = new StringBuilder();
-			int data = inputStream.read();
-			
-			while(data != -1) {
-				response.append((char) data);
-				data = inputStream.read();
-			}
-			
+			System.out.println(response);
+			socket.close();
+			System.out.println(response);
+			socket.close();
+			System.out.println(response);
+			socket.close();
+			System.out.println(response);
+			socket.close();
+			System.out.println(response);
+			socket.close();
 			System.out.println(response);
 			socket.close();
 			
