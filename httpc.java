@@ -10,7 +10,8 @@ import java.util.Scanner;
 
 public class httpc {
 
-	/*	System.out.println(method);
+	/*	System.out.println(method); 
+
 		if(verbose)
 			System.out.println("Verbose");
 		else 
@@ -149,6 +150,7 @@ public class httpc {
 			for(String header: headers)
 				request.append(header+"\n");
 
+			request.append("\n");
 			System.out.println(request.toString());
 
 			outputStream.write(request.toString().getBytes());
@@ -176,7 +178,7 @@ public class httpc {
 	}
 
 	public static void postRequest(boolean verbose, ArrayList<String> headers, String fileData, String url) throws MalformedURLException{
-		/*try {
+		try {
 			Socket socket = new Socket("httpbin.org", 80);
 			
 			InputStream inputStream = socket.getInputStream();
@@ -207,7 +209,7 @@ public class httpc {
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-		}*/
+		}
 	}
 
 	public static void post2Example() {
