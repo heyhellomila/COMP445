@@ -1,7 +1,6 @@
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.net.Socket;
 import java.net.URL;
 import java.net.MalformedURLException;
@@ -21,21 +20,31 @@ public class httpc {
 	 * 
 	 */
 
-	private final static String help_general_text = "httpc is a curl-like application but supports HTTP protocol only."
-			+ "\n\n" + "Usage:" + "\n\t" + "httpc command [arguments]" + "\n" + "The commands are:" + "\n\t"
-			+ "get\texecutes a HTTP GET request and prints the response." + "\n\t" + "post" + "\t"
-			+ "executes a HTTP POST request and prints the response." + "\n\t" + "help" + "\t" + "prints this screen."
-			+ "\n\n" + "Use  for more information about a command.";
+	private final static String help_general_text = """
+			httpc is a curl-like application but supports HTTP protocol only.
+
+			Usage:
+			\thttpc command [arguments]
+			The commands are:
+			\tget\texecutes a HTTP GET request and prints the response.
+			\tpost\texecutes a HTTP POST request and prints the response.
+			\thelp\tprints this screen.
+
+			Use  for more information about a command.""";
 
 	private final static String help_get_usage_text = "usage: httpc get [-v] [-h key:value] URL\n\nGet executes a HTTP GET request for a given URL.\n\n\t-v\t\tPrints the detail of the response such as protocol, status, and headers.\n\t-h key:value\tAssociates headers to HTTP Request with the format 'key:value'.";
 
-	private final static String help_post_usage_text = "usage: httpc post [-v] [-h key:value] [-d inline-data] [-f file] URL"
-			+ "\n\n" + "Post executes a HTTP POST request for a given URL with inline data or from file." + "\n\n\t"
-			+ "-v" + "\t\t" + "Prints the detail of the response such as protocol, status, and headers." + "\n\t"
-			+ "-h key:value\tAssociates headers to HTTP Request with the format 'key:value'." + "\n\t" + "-d string"
-			+ "\t" + "Associates an inline data to the body HTTP POST request." + "\n\t"
-			+ "-f file\t\tAssociates the content of a file to the body HTTP POST request" + "\n\n"
-			+ "Either [-d] or [-f] can be used but not both.";
+	private final static String help_post_usage_text = """
+			usage: httpc post [-v] [-h key:value] [-d inline-data] [-f file] URL
+
+			Post executes a HTTP POST request for a given URL with inline data or from file.
+
+			\t-v\t\tPrints the detail of the response such as protocol, status, and headers.
+			\t-h key:value\tAssociates headers to HTTP Request with the format 'key:value'.
+			\t-d string\tAssociates an inline data to the body HTTP POST request.
+			\t-f file\t\tAssociates the content of a file to the body HTTP POST request
+
+			Either [-d] or [-f] can be used but not both.""";
 
 	private final static String error_get_format = "Get Error";
 	private final static String error_post_format = "Post Error";
@@ -48,7 +57,7 @@ public class httpc {
 		ArrayList<String> headers = new ArrayList<String>();
 		String inlineData = null;
 		String filePath = null;
-		String fileData = null;
+		String fileData;
 		String url = null;
 		boolean vPresent = false;
 		boolean dPresent = false;
@@ -171,7 +180,7 @@ public class httpc {
 			}
 
 			if (!verbose) 
-			System.out.println(response.toString().substring(response.toString().indexOf("\r\n\r\n")));
+			System.out.println(response.substring(response.toString().indexOf("\r\n\r\n")));
 				else
 			System.out.println(response);
 
