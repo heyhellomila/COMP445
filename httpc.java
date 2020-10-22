@@ -229,7 +229,7 @@ public class httpc {
 			}
 
 			if (!verbose) 
-				System.out.println(response.toString().substring(response.toString().indexOf("\r\n\r\n")));
+				System.out.println(response.substring(response.toString().indexOf("\r\n\r\n")));
 			else
 				System.out.println(response);
 			
