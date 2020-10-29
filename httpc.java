@@ -6,7 +6,9 @@ import java.net.Socket;
 import java.net.URL;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
+
 
 public class httpc {
 
@@ -40,6 +42,11 @@ public class httpc {
 	private final static String error_get_format = "Get Error";
 	private final static String error_post_format = "Post Error";
 	private final static String error_argument_format = "Argument Error";
+
+	public enum RequestType{
+		GET,
+		POST
+	}
 
 	public static void main(String[] args) throws MalformedURLException {
 
@@ -110,42 +117,64 @@ public class httpc {
 				if (inlineData != null || filePath != null)
 					System.out.println(error_get_format);
 				else {
-					getRequest(verbose, headers, url);
+					request(RequestType.GET, url,verbose,headers,null);
 				}
 			}
 			if (method.equals("post")) {
 				if (inlineData != null && filePath == null)
-					postRequest(verbose, headers, inlineData, url, false);
+					request(RequestType.POST,url, verbose, headers, new ArrayList<String>(Arrays.asList("0",inlineData)));
 
 				else if (inlineData == null && filePath != null) {
+					try{
 					fileData = readFile(filePath);
-					postRequest(verbose, headers, fileData, url, true);
+					request(RequestType.POST,url, verbose, headers, new ArrayList<String>(Arrays.asList("1",fileData)));
+				}
+				catch (FileNotFoundException e){
+					System.out.println("We didn't find a file. Please validate the path");
+				}
+				catch (Exception e){
+					System.out.println("Something went wrong! Validate the file for errors");
+				}
 				} 
 				else
-					System.out.println(error_get_format);
+					System.out.println(error_post_format);
 			}
 
 		}
 	}
-
-	public static String readFile(String file_path) {
+	
+	public static String readFile(String file_path) throws FileNotFoundException{
 		StringBuilder data = new StringBuilder();
 		File file = new File(file_path);
-		try {
+
 			Scanner scanner = new Scanner(file);
 			while (scanner.hasNextLine()) {
 				data.append(scanner.nextLine());				
 			}
 			scanner.close();
-		} catch (Exception e) {
-			System.out.println("We didn't find a file. Please validate the path.");
-		}
+		
 		return data.toString();
 	}
 
-	public static void getRequest(boolean verbose, ArrayList<String> headers, String url) throws MalformedURLException {
+	// if Post, args must contain in the first position a 1/0 as boolean for if the fhe body comes from a file 
+	// on the second position it should contain the body itself or "" if empty body
+	// if Get, Args is empty
+	public static void request(RequestType rt, String url, boolean verbose, ArrayList<String> headers, ArrayList<String> args) throws MalformedURLException{
 		URL urlObj = new URL(url);
+		String contentType=null;
+		String body=null;
 
+		if(rt.equals(RequestType.POST)){
+			Boolean fileBody = args.get(0).equals("1") ? true : false;
+			body = args.get(1);
+			contentType = "application/x-www-form-urlencoded";
+		if (fileBody)
+			contentType = "multipart/form-data; boundary=\"limit\"";
+		else if (body.length() > 0 && (body.charAt(0) == '{'))
+			contentType = "application/json";
+		}
+		contentType="text/html; charset=UTF-8";
+		
 		try {
 			Socket socket = new Socket(urlObj.getHost(), 80);
 
@@ -153,12 +182,27 @@ public class httpc {
 			OutputStream outputStream = socket.getOutputStream();
 
 			StringBuilder request = new StringBuilder();
-			request.append("GET /" + urlObj.getFile() + " HTTP/1.0\n");
+			String requestString = null;
+			if(rt.equals(RequestType.GET)){
+				requestString = "GET";
+			}
+			else if (rt.equals(RequestType.POST)){
+				requestString = "POST";
+			}
+			request.append(requestString+" /" + urlObj.getFile() + " HTTP/1.0\n");
+			
 			request.append("Host: " + urlObj.getHost() + "\n");
+			
 			for (String header : headers)
 				request.append(header + "\n");
-			request.append("\n");
+			
+			if (rt.equals(RequestType.POST)){
+				request.append("Content-Type: " + contentType + "\n");
+				request.append("Content-Length: " + body.length() + "\n" + "\n" + body);
+			}
 
+			request.append("\n");
+			System.out.println(request.toString());
 			outputStream.write(request.toString().getBytes());
 			outputStream.flush();
 			StringBuilder response = new StringBuilder();
@@ -180,54 +224,7 @@ public class httpc {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
 	}
 
-	public static void postRequest(boolean verbose, ArrayList<String> headers, String body, String url,
-			boolean fileBody) throws MalformedURLException {
-				
-		URL urlObj = new URL(url);
-		String contentType = null;
-		if (fileBody)
-			contentType = "multipart/form-data; boundary=\"limit\"";
-		else if (body.length() > 0 && (body.charAt(0) == '{'))
-			contentType = "application/json";
-		else
-			contentType = "application/x-www-form-urlencoded";
-
-		try {
-			Socket socket = new Socket(urlObj.getHost(), 80);
-
-			InputStream inputStream = socket.getInputStream();
-			OutputStream outputStream = socket.getOutputStream();
-
-			StringBuilder request = new StringBuilder();
-			request.append("POST /" + urlObj.getFile() + " HTTP/1.0\n");
-			request.append("Host: " + urlObj.getHost() + "\n");
-			request.append("Content-Type: " + contentType + "\n");
-			request.append("Content-Length: " + body.length() + "\n" + "\n" + body);
-
-			request.append("\n");
-
-			outputStream.write(request.toString().getBytes());
-			outputStream.flush();
-			StringBuilder response = new StringBuilder();
-
-			int data = inputStream.read();
-
-			while (data != -1) {
-				response.append((char) data);
-				data = inputStream.read();
-			}
-
-			if (!verbose) 
-				System.out.println(response.toString().substring(response.toString().indexOf("\r\n\r\n")));
-			else
-				System.out.println(response);
-			
-			socket.close();
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 }
