@@ -8,40 +8,10 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
+import HttpLibrary;
 
 
 public class httpc {
-
-	/*
-	 * System.out.println(method);
-	 * 
-	 * if(verbose) System.out.println("Verbose"); else
-	 * System.out.println("not Verbose");
-	 * 
-	 * for(String s:headers) System.out.println(s); System.out.println(data);
-	 * System.out.println(url);
-	 * 
-	 */
-
-	private final static String help_general_text = "httpc is a curl-like application but supports HTTP protocol only."
-			+ "\n\n" + "Usage:" + "\n\t" + "httpc command [arguments]" + "\n" + "The commands are:" + "\n\t"
-			+ "get\texecutes a HTTP GET request and prints the response." + "\n\t" + "post" + "\t"
-			+ "executes a HTTP POST request and prints the response." + "\n\t" + "help" + "\t" + "prints this screen."
-			+ "\n\n" + "Use  for more information about a command.";
-
-	private final static String help_get_usage_text = "usage: httpc get [-v] [-h key:value] URL\n\nGet executes a HTTP GET request for a given URL.\n\n\t-v\t\tPrints the detail of the response such as protocol, status, and headers.\n\t-h key:value\tAssociates headers to HTTP Request with the format 'key:value'.";
-
-	private final static String help_post_usage_text = "usage: httpc post [-v] [-h key:value] [-d inline-data] [-f file] URL"
-			+ "\n\n" + "Post executes a HTTP POST request for a given URL with inline data or from file." + "\n\n\t"
-			+ "-v" + "\t\t" + "Prints the detail of the response such as protocol, status, and headers." + "\n\t"
-			+ "-h key:value\tAssociates headers to HTTP Request with the format 'key:value'." + "\n\t" + "-d string"
-			+ "\t" + "Associates an inline data to the body HTTP POST request." + "\n\t"
-			+ "-f file\t\tAssociates the content of a file to the body HTTP POST request" + "\n\n"
-			+ "Either [-d] or [-f] can be used but not both.";
-
-	private final static String error_get_format = "Get Error";
-	private final static String error_post_format = "Post Error";
-	private final static String error_argument_format = "Argument Error";
 
 	public enum RequestType{
 		GET,
@@ -50,13 +20,15 @@ public class httpc {
 
 	public static void main(String[] args) throws MalformedURLException {
 
-		boolean verbose = false;
-		String method = null;
 		ArrayList<String> headers = new ArrayList<String>();
+
 		String inlineData = null;
 		String filePath = null;
 		String fileData = null;
 		String url = null;
+		String method = null;
+
+		boolean verbose = false;
 		boolean vPresent = false;
 		boolean dPresent = false;
 		boolean fPresent = false;
@@ -77,12 +49,12 @@ public class httpc {
 				i++;
 				validated=false;
 				if(args[i]==null)
-					System.out.println(help_general_text);
+					System.out.println(HttpLibrary.help_general_text);
 				else if(args[i].toLowerCase().equals("get")){
-					System.out.println(help_get_usage_text);
+					System.out.println(HttpLibrary.help_get_usage_text);
 				}
 				else if(args[i].toLowerCase().equals("post")){
-					System.out.println(help_post_usage_text);
+					System.out.println(HttpLibrary.help_post_usage_text);
 				}
 
 			} else if (args[i].equals("-v")) {
@@ -100,22 +72,26 @@ public class httpc {
 				dPresent = true;
 				i++;
 				inlineData = args[i];
+				if(args.length==i+1)
+					validated = false;
 			} else if (args[i].equals("-f")) {
 				if (fPresent)
 					validated = false;
 				fPresent = true;
 				i++;
 				filePath = args[i];
+				if(args.length==i+1)
+					validated = false;
 			} else
 				url = args[i];
 		}
 		if (!validated || method == null)
-			System.out.println(error_argument_format);
+			System.out.println(HttpLibrary.error_argument_format);
 		else {
 
 			if (method.equals("get")) {
 				if (inlineData != null || filePath != null)
-					System.out.println(error_get_format);
+					System.out.println(HttpLibrary.error_get_format);
 				else {
 					request(RequestType.GET, url,verbose,headers,null);
 				}
@@ -126,7 +102,7 @@ public class httpc {
 
 				else if (inlineData == null && filePath != null) {
 					try{
-					fileData = readFile(filePath);
+					fileData = httpLibrary.readFile(filePath);
 					request(RequestType.POST,url, verbose, headers, new ArrayList<String>(Arrays.asList("1",fileData)));
 				}
 				catch (FileNotFoundException e){
@@ -137,23 +113,10 @@ public class httpc {
 				}
 				} 
 				else
-					System.out.println(error_post_format);
+					System.out.println(HttpLibrary.error_post_format);
 			}
 
 		}
-	}
-	
-	public static String readFile(String file_path) throws FileNotFoundException{
-		StringBuilder data = new StringBuilder();
-		File file = new File(file_path);
-
-			Scanner scanner = new Scanner(file);
-			while (scanner.hasNextLine()) {
-				data.append(scanner.nextLine());				
-			}
-			scanner.close();
-		
-		return data.toString();
 	}
 
 	// if Post, args must contain in the first position a 1/0 as boolean for if the fhe body comes from a file 
@@ -176,7 +139,7 @@ public class httpc {
 		contentType="text/html; charset=UTF-8";
 		
 		try {
-			Socket socket = new Socket(urlObj.getHost(), 80);
+			Socket socket = new Socket(urlObj.getHost(), 8090);
 
 			InputStream inputStream = socket.getInputStream();
 			OutputStream outputStream = socket.getOutputStream();
@@ -202,7 +165,7 @@ public class httpc {
 			}
 
 			request.append("\n");
-			System.out.println(request.toString());
+
 			outputStream.write(request.toString().getBytes());
 			outputStream.flush();
 			StringBuilder response = new StringBuilder();
