@@ -11,15 +11,15 @@ import java.util.List;
 
 public class server {  
     
-    protected static final int DEFAULT_PORT = 8090;
+    public static final int DEFAULT_PORT = 8090;
     // TODO - add security by blocking non valid ports
    // private static final int MAX_PORT = 65535;
    // private static final int MIN_RESERVED_PORT=0;
    // private static final int MAX_RESERVED_PORT=1023;
-
     private int port;
     private boolean debug = false;
 
+ 
     public server(int port, boolean debug){
         this(port);
         this.debug=debug;
@@ -110,20 +110,20 @@ public class server {
             
     }
     
-    public void handleGET(Socket client, String content) throws IOException{
-        sendResponse(client, content);
+    public void handleGET(Socket client, String request) throws IOException{
+        sendResponse(client, "200 OK", request);
     }
-    public void handlePOST(Socket client, String content) throws IOException{
-        sendResponse(client, content);
+    public void handlePOST(Socket client, String request) throws IOException{
+        sendResponse(client, "200 OK", request);
     }
 
   
-    public void sendResponse(Socket client, String content) throws IOException {
+    public void sendResponse(Socket client,String responseCode, String content) throws IOException {
         SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
         OutputStream clientOutput = client.getOutputStream();
         StringBuilder clientResponse = new StringBuilder();
         
-        clientResponse.append("HTTP/1.0 200 OK\r\n");
+        clientResponse.append("HTTP/1.0 "+responseCode+"\r\n");
         clientResponse.append("Server: " + client.getInetAddress()+"\r\n");
         clientResponse.append(sdf.format(Calendar.getInstance().getTime()));
         clientResponse.append("\r\nContent-Type: text/html\r\n");
@@ -133,4 +133,22 @@ public class server {
         clientOutput.write(clientResponse.toString().getBytes());
         clientOutput.flush();
     }
+
+
+    public int getPort() {
+        return this.port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public boolean isDebug() {
+        return this.debug;
+    }
+
+    public void setDebug(boolean debug) {
+        this.debug = debug;
+    }
+
 }

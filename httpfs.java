@@ -1,3 +1,5 @@
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.Socket;
 
@@ -7,14 +9,30 @@ public class httpfs extends server {
 		GET,
 		POST
 	}
+    
+    private static final String DEFAULT_DIRECTORY = "/";
+    private static String directory;
+    private static boolean vPresent = false;
+    private static boolean dPresent = false;
+    private static boolean pPresent = false;
+
+
+    public httpfs(int port, boolean debug,String directory) {
+        super(port, debug);
+        httpfs.directory = directory;
+    }
+    public httpfs(int port, boolean debug) {
+        this(port, debug,DEFAULT_DIRECTORY);
+    }
+    public httpfs(int port) {
+        this(port, false,DEFAULT_DIRECTORY);
+    }
 
     public static void main(String[] args) {
-		int port = 8090;
-		String directory = "";
-		boolean vPresent = false;
-        boolean dPresent = false;
-        boolean pPresent = false;
-		boolean validated = true;
+        int port=DEFAULT_PORT;
+        boolean validated = true;
+
+        httpfs fileServer;
 
 		for (int i = 0; i < args.length; i++) {
 			if (args[i].equals("-v")) {
@@ -29,7 +47,8 @@ public class httpfs extends server {
 				try {
                     directory = args[i + 1];
                 } catch(Exception e){
-                    System.out.println("The directory name is invalid");
+                    directory=DEFAULT_DIRECTORY;
+                    System.out.println("The directory name is invalid, going to default directory");
                 }
 			} else if (args[i].equals("-p")) {
                 if (pPresent)
@@ -39,27 +58,60 @@ public class httpfs extends server {
                     try {
                         port = Integer.parseInt(args[i+1]);
                     } catch(Exception e) {
-                        port = 8080;
-                        System.out.println("The port value is not valid. Switched by default to port 8080");
+                        System.out.println("The port value is not valid. Switched by default to port "+DEFAULT_PORT);
                     }
                 }
             if (!validated){
                 System.out.println("Not validated error.");
             }
         }
+        
+        fileServer = new httpfs(port,vPresent,directory);
 
-        server server = new server(port,true);
-        server.run();
+        fileServer.run();
     }
-    @Override 
-    public void handleClient(String method,Socket client, String request) throws IOException{}
-    
+
     @Override  
-    public void handleGET(Socket client, String content) throws IOException{
-        //sendResponse(client, content);
+    public void handleGET(Socket client, String request) throws IOException{
+        String returnCode = "200 OK";
+        String content=null;
+        File file = new File(directory);
+        try{
+            if(file.isDirectory()){
+                String directoryContents[] = file.list();
+                if(isDebug())
+                    System.out.println("List of files and directories in the specified directory:");
+                for(int i=0; i<directoryContents.length; i++) {
+                    content+=directoryContents[i];
+                    if(isDebug())
+                        System.out.println(directoryContents[i]);
+                }
+            }
+            else if (file.isFile()){
+                
+                content =httpLibrary.readFile(file);
+                if(isDebug())
+                    System.out.println("File contents: \n"+content);
+            
+            }
+            else if (!file.canRead()){
+                returnCode="403 Forbidden ";
+            }
+            else{
+                returnCode="500 Internal Error ";
+            }  
+        }
+            catch(FileNotFoundException fnfe){
+                returnCode="404 Not Found";
+            }
+            catch(Exception fnfe){
+                returnCode="500 Internal Error";
+            }
+        sendResponse(client,returnCode, content);
     }
     @Override 
-    public void handlePOST(Socket client, String content) throws IOException{
+    public void handlePOST(Socket client, String request) throws IOException{
+        System.out.println("handlePOST");
         //sendResponse(client, content);
     }
 }

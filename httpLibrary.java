@@ -37,4 +37,8 @@ final static String ERROR_ARGUMETS_FORMAT = "Argument Error";
 		return data.toString();
  }
 
+public static String readFile(File file) throws FileNotFoundException{
+	return readFile(file.getAbsolutePath());
+}
+
 }
