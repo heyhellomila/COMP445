@@ -1,10 +1,4 @@
-{
-"args": { "assignment": "1",
-"course": "networking"
-},
-"headers": {
-"Host": "httpbin.org",
-"User-Agent": "Concordia-HTTP/1.0"
-},
-"url": "http://httpbin.org/get?course=networking&assignment=1"
-}
+name    id
+John    G12N
+Sarah   J87M
+Bob     N33Y
