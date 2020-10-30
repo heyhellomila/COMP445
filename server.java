@@ -4,51 +4,78 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
-public class server {
-    public enum RequestType{GET, POST}
-    private static final DEFAULT_PORT = 8080;
+public class server {  
+    
+    protected static final int DEFAULT_PORT = 8090;
+    // TODO - add security by blocking non valid ports
+   // private static final int MAX_PORT = 65535;
+   // private static final int MIN_RESERVED_PORT=0;
+   // private static final int MAX_RESERVED_PORT=1023;
+
     private int port;
     private boolean debug = false;
-    
+
     public server(int port, boolean debug){
-        server(port);
+        this(port);
+        this.debug=debug;
+    }
+    public server(int port){
+        this.port=port;
+    }
+    
+    public server(boolean debug){
+        this();
         this.debug = debug;
     }
-
-    public server(int port){
-        this.port = port
-    }
-
     public server(){
-        this.port = DEFAULT_PORT;
+        this.port=DEFAULT_PORT;
     }
 
-    public void run() throws IOException {
+    
+    public static void main(String[] args) {
+        server server = new server(true);
+        server.run();
+    }
+
+    public void run() {
         if(debug)
             System.out.println("Server starting...");
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            if(debug)
+            if(debug){
                 System.out.println("Server started");
-            while (true) {
-                
-            if(debug)
                 System.out.println("Server listening on port " + port);
-                try (Socket client = serverSocket.accept()) {
-                    System.out.println("Client Connected\r\n");
-                    handleClient(client);
-                }
             }
+            while (true) {
+                try (Socket client = serverSocket.accept()) {
+                    if(debug)
+                        System.out.println("Client Connected\r\n");
+                        
+                    String request = getRequest(client);
+                    handleClient(request.split("\r\n")[0].split(" ")[0],client,request);
+                    
+                    client.close();
+                    if(debug)
+                        System.out.println("Client Disconnected\r\n");
+                } catch (IOException e) {
+                    System.out.println(e.getMessage());
+                }
+                
+              
+            }
+            
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+        
 
     }
 
-    public void handleClient(Socket client) throws IOException{
+    public String getRequest(Socket client) throws IOException{
         BufferedReader br = new BufferedReader(new InputStreamReader(client.getInputStream()));
 
         StringBuilder requestBuilder = new StringBuilder();
@@ -58,67 +85,52 @@ public class server {
         }
 
         String request = requestBuilder.toString();
-        String[] requestsLines = request.split("\r\n");
-        String[] requestLine = requestsLines[0].split(" ");
-        String method = requestLine[0];
-        String path = requestLine[1];
-        String version = requestLine[2];
-        String host = requestsLines[1].split(" ")[1];
+        
+        return request;
+       /* String[] requestsLines = request.split("\r\n");
+        String method = request.split("\r\n")[0].split(" ")[0];
 
         List<String> headers = new ArrayList<>();
         for (int h = 2; h < requestsLines.length; h++) {
             String header = requestsLines[h];
             headers.add(header);
-        }
+        }*/
 
-        if (method.equals("GET"){
-            handleGET();
+    }
+
+    public void handleClient(String method,Socket client, String request) throws IOException{
+        
+
+        if (method.equals("GET")){
+            handleGET(client, request);
         }
-        else if (method.equals("POST"){
-            handlePOST();
+        else if (method.equals("POST")){
+            handlePOST(client, request);
         }
             
     }
-   
-   
-
-    private static void handleClient(Socket client) throws IOException {
-        
-
-        Path filePath = getFilePath(path);
-        File f = new File(path);
-        if (f.exist()) {
-            // file exist
-            String contentType = guessContentType(filePath);
-            sendResponse(client, "200 OK", Files.readAllBytes(filePath));
-        } else {
-            // 404
-            byte[] notFoundContent = "<h1>Not found :(</h1>".getBytes();
-            sendResponse(client, "404 Not Found", notFoundContent);
-        }
-
+    
+    public void handleGET(Socket client, String content) throws IOException{
+        sendResponse(client, content);
+    }
+    public void handlePOST(Socket client, String content) throws IOException{
+        sendResponse(client, content);
     }
 
-    private static Path getFilePath(String path) {
-        if ("/".equals(path)) {
-            path = "/index.html";
-        }
-
-        return Paths.get(path);
-    }
-    private static void sendResponse(Socket client, String status, byte[] content) throws IOException {
+  
+    public void sendResponse(Socket client, String content) throws IOException {
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
         OutputStream clientOutput = client.getOutputStream();
-        clientOutput.write(("HTTP/1.1 \r\n" + status).getBytes());
-        clientOutput.write(("ContentType: text/html" + "\r\n").getBytes());
-        clientOutput.write("\r\n".getBytes());
-        clientOutput.write(content);
-        clientOutput.write("\r\n\r\n".getBytes());
+        StringBuilder clientResponse = new StringBuilder();
+        
+        clientResponse.append("HTTP/1.0 200 OK\r\n");
+        clientResponse.append("Server: " + client.getInetAddress()+"\r\n");
+        clientResponse.append(sdf.format(Calendar.getInstance().getTime()));
+        clientResponse.append("\r\nContent-Type: text/html\r\n");
+        clientResponse.append("Content-Length:"+ content.getBytes().length + "\r\n");
+        clientResponse.append("\r\n"+content + "\r\n\r\n");
+
+        clientOutput.write(clientResponse.toString().getBytes());
         clientOutput.flush();
-        client.close();
     }
-
-    private static String guessContentType(Path filePath) throws IOException {
-        return Files.probeContentType(filePath);
-    }
-
 }

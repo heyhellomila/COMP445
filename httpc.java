@@ -1,14 +1,11 @@
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.Socket;
 import java.net.URL;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Scanner;
-import HttpLibrary;
 
 
 public class httpc {
@@ -49,12 +46,12 @@ public class httpc {
 				i++;
 				validated=false;
 				if(args[i]==null)
-					System.out.println(HttpLibrary.help_general_text);
+					System.out.println(httpLibrary.HELP_GENERAL_TEXT);
 				else if(args[i].toLowerCase().equals("get")){
-					System.out.println(HttpLibrary.help_get_usage_text);
+					System.out.println(httpLibrary.HELP_GET_USAGE_TEXT);
 				}
 				else if(args[i].toLowerCase().equals("post")){
-					System.out.println(HttpLibrary.help_post_usage_text);
+					System.out.println(httpLibrary.HELP_POST_USAGE_TEXT);
 				}
 
 			} else if (args[i].equals("-v")) {
@@ -86,12 +83,12 @@ public class httpc {
 				url = args[i];
 		}
 		if (!validated || method == null)
-			System.out.println(HttpLibrary.error_argument_format);
+			System.out.println(httpLibrary.ERROR_ARGUMETS_FORMAT);
 		else {
 
 			if (method.equals("get")) {
 				if (inlineData != null || filePath != null)
-					System.out.println(HttpLibrary.error_get_format);
+					System.out.println(httpLibrary.ERROR_GET_FORMAT);
 				else {
 					request(RequestType.GET, url,verbose,headers,null);
 				}
@@ -113,7 +110,7 @@ public class httpc {
 				}
 				} 
 				else
-					System.out.println(HttpLibrary.error_post_format);
+					System.out.println(httpLibrary.ERROR_POST_FORMAT);
 			}
 
 		}

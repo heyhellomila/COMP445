@@ -1,28 +1,16 @@
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
-public class httpfs {
+public class httpfs extends server {
 
     public enum RequestType{
 		GET,
 		POST
 	}
 
-    public static void main(String[] args) throws IOException {
-
-		int port = 8080;
+    public static void main(String[] args) {
+		int port = 8090;
 		String directory = "";
-
-		boolean verbose = false;
 		boolean vPresent = false;
         boolean dPresent = false;
         boolean pPresent = false;
@@ -34,7 +22,6 @@ public class httpfs {
 				    validated = false;
 				}
 				vPresent = true;
-				verbose = true;
 			} else if (args[i].equals("-d")) {
 				if (dPresent)
 				    validated = false;
@@ -56,57 +43,26 @@ public class httpfs {
                         System.out.println("The port value is not valid. Switched by default to port 8080");
                     }
                 }
-        if (!validated){
-            System.out.println("Not validated error.");
-        }
-
-        try{
-            server.startServer(port);
-
-        } catch(Exception e) {
-            System.out.println(e);
-        }
-        
-	}
-
-    public static void main( String[] args ) throws Exception {
-        System.out.println("Start method main");
-        try (ServerSocket serverSocket = new ServerSocket(8080)) {
-            while (true) {
-                System.out.println("Start while");
-                try (Socket client = serverSocket.accept()) {
-                    System.out.println("Start Socket");
-
-                    handleClient(client);
-                }
+            if (!validated){
+                System.out.println("Not validated error.");
             }
         }
+
+        server server = new server(port,true);
+        server.run();
     }
-
-    private static void handleClient(Socket client) throws IOException {
-        System.out.println("Start method Handle Client");
-        BufferedReader br = new BufferedReader(new InputStreamReader(client.getInputStream()));
-
-        StringBuilder requestBuilder = new StringBuilder();
-        String line;
-        while (!(line = br.readLine()).isEmpty()) {
-            requestBuilder.append(line + "\r\n");
-        }
-
-        String request = requestBuilder.toString();
-        String[] requestsLines = request.split("\r\n");
-        String[] requestLine = requestsLines[0].split(" ");
-        String method = requestLine[0];
-        String path = requestLine[1];
-        String version = requestLine[2];
-        String host = requestsLines[1].split(" ")[1];
-
-        List<String> headers = new ArrayList<>();
-        for (int h = 2; h < requestsLines.length; h++) {
-            String header = requestsLines[h];
-            headers.add(header);
-        }
-
+    @Override 
+    public void handleClient(String method,Socket client, String request) throws IOException{}
+    
+    @Override  
+    public void handleGET(Socket client, String content) throws IOException{
+        //sendResponse(client, content);
+    }
+    @Override 
+    public void handlePOST(Socket client, String content) throws IOException{
+        //sendResponse(client, content);
+    }
+}
      /*   String accessLog = String.format("Client %s, method %s, path %s, version %s, host %s, headers %s",
                 client.toString(), method, path, version, host, headers.toString());
                 System.out.println(request);
@@ -130,7 +86,7 @@ public class httpfs {
             byte[] notFoundContent = "<h1>Not found :(</h1>".getBytes();
             sendResponse(client, "404 Not Found", "text/html", notFoundContent);
         }
-*/
+
     }
 
     private static void sendResponse(Socket client, String status, String contentType, byte[] content) throws IOException {
@@ -158,4 +114,4 @@ public class httpfs {
 
 
 }
-}
+*/
