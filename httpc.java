@@ -149,19 +149,19 @@ public class httpc {
 			else if (rt.equals(RequestType.POST)){
 				requestString = "POST";
 			}
-			request.append(requestString+" /" + urlObj.getFile() + " HTTP/1.0\n");
+			request.append(requestString+ " " + urlObj.getFile() + " HTTP/1.0\r\n");
 			
-			request.append("Host: " + urlObj.getHost() + "\n");
+			request.append("Host: " + urlObj.getHost() + "\r\n");
 			
 			for (String header : headers)
-				request.append(header + "\n");
+				request.append(header + "\r\n");
 			
 			if (rt.equals(RequestType.POST)){
-				request.append("Content-Type: " + contentType + "\n");
-				request.append("Content-Length: " + body.length() + "\n" + "\n" + body);
+				request.append("Content-Type: " + contentType + "\r\n");
+				request.append("Content-Length: " + body.length() + "\r\n\r\n" + body);
 			}
 
-			request.append("\n");
+			request.append("\r\n");
 
 			outputStream.write(request.toString().getBytes());
 			outputStream.flush();
