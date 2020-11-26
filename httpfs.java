@@ -79,7 +79,7 @@ public class httpfs extends server {
     @Override
     public void handleGET(Socket client, String request) throws IOException {
         String returnCode = httpResponse.OK_200;
-        String content = "";
+        StringBuilder content = new StringBuilder();
         String baseDir = directory;
         String path = directory + request.split("\r\n")[0].split(" ")[1].replace("/", "\\");
 
@@ -95,35 +95,36 @@ public class httpfs extends server {
 
         try {
             if (file.isDirectory()) {
-                String directoryContents[] = file.list();
+                String[] directoryContents = file.list();
                 if (isDebug())
                     System.out.println(httpResponse.LIST_OF_FILE);
-                for (int i = 0; i < directoryContents.length; i++) {
-                    content += directoryContents[i] + "\r\n";
+                assert directoryContents != null;
+                for (String directoryContent : directoryContents) {
+                    content.append(directoryContent).append("\r\n");
                     if (isDebug())
-                        System.out.println(directoryContents[i]);
+                        System.out.println(directoryContent);
                 }
             } else if (file.isFile()) {
 
-                content = httpLibrary.readFile(file);
+                content = new StringBuilder(httpLibrary.readFile(file));
                 if (isDebug())
                     System.out.println("File contents: \n" + content);
 
             } else if (!file.exists()) {
-                content = httpResponse.FILE_NOT_FOUND;
+                content = new StringBuilder(httpResponse.FILE_NOT_FOUND);
                 returnCode = httpResponse.NOT_FOUND_404;
             } else {
-                content = httpResponse.SERVER_ERROR;
+                content = new StringBuilder(httpResponse.SERVER_ERROR);
                 returnCode = httpResponse.INTERNAL_SERVER_ERROR_500;
             }
         } catch (FileNotFoundException fnfe) {
-            content = httpResponse.FILE_NOT_FOUND;
+            content = new StringBuilder(httpResponse.FILE_NOT_FOUND);
             returnCode = httpResponse.NOT_FOUND_404;
         } catch (Exception fnfe) {
-            content = httpResponse.SERVER_ERROR;
+            content = new StringBuilder(httpResponse.SERVER_ERROR);
             returnCode = httpResponse.INTERNAL_SERVER_ERROR_500;
         }
-        sendResponse(client, returnCode, content);
+        sendResponse(client, returnCode, content.toString());
     }
 
     @Override
