@@ -1,9 +1,16 @@
+import UDP.Packet;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.ServerSocket;
+import java.net.DatagramSocket;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.DatagramChannel;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
@@ -12,7 +19,9 @@ public class server {
     public static final int DEFAULT_PORT = 8090;
     public static final int MAX_PORT = 65353;
     public static final int MAX_RESERVED = 1023;
+
     private int port;
+
     private boolean debug = false;
 
 
@@ -45,23 +54,43 @@ public class server {
             System.out.println("Server starting...");
         if (port > MAX_PORT || port < MAX_RESERVED) {
             if (debug)
-                System.out.println("Invalide port, switching to default port: " + DEFAULT_PORT);
+                System.out.println("Invalid port, switching to default port: " + DEFAULT_PORT);
             port = DEFAULT_PORT;
         }
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
+        try (DatagramSocket serverSocket = new DatagramSocket(port)) {
             if (debug) {
                 System.out.println("Server started");
                 System.out.println("Server listening on port " + port);
             }
             while (true) {
-                try (Socket client = serverSocket.accept()) {
+                try (DatagramChannel channel = DatagramChannel.open()) {
+                    channel.bind(new InetSocketAddress(port));
+                    ByteBuffer buffer = ByteBuffer
+                            .allocate(Packet.MAX_LEN)
+                            .order(ByteOrder.BIG_ENDIAN);
                     if (debug)
-                        System.out.println("Client Connected\r\n");
+                        System.out.println("Client Connected: " + channel.getLocalAddress() + "\r\n");
 
-                    String request = getRequest(client);
-                    handleClient(request.split("\r\n")[0].split(" ")[0], client, request);
+                    while (true) {
+                        buffer.clear();
+                        SocketAddress router = channel.receive(buffer);
 
-                    client.close();
+                        buffer.flip();
+                        Packet packet = Packet.fromBuffer(buffer);
+                        buffer.flip();
+
+                        if (debug) {
+                            System.out.println("Received Packet of type " + packet.getType() + " and sequence number: " + packet.getSequenceNumber());
+                        }
+
+                        //String payload = new String(packet.getPayload(), UTF_8);
+                        Packet response = packet.toBuilder()
+                                .setPayload(payl)
+
+                    }
+                    //String request = getRequest(client);
+                    //handleClient(request.split("\r\n")[0].split(" ")[0], client, request);
+                    //client.close();
                     if (debug)
                         System.out.println("Client Disconnected\r\n");
                 } catch (IOException e) {

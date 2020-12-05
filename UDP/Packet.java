@@ -62,8 +62,9 @@ public class Packet {
 
     /**
      * fromBytes creates a packet from the given array of bytes.
+     * @param bytes
      */
-    public static Packet fromBytes(byte[] bytes) throws IOException {
+    public static Packet fromBytes(ByteBuffer bytes) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(MAX_LEN).order(ByteOrder.BIG_ENDIAN);
         buf.put(bytes);
         buf.flip();
