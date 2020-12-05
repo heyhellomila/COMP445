@@ -43,11 +43,11 @@ public class server {
     public void run() {
         if (debug)
             System.out.println("Server starting...");
-            if(port>MAX_PORT || port < MAX_RESERVED){
-                if (debug)
-                    System.out.println("Invalide port, switching to default port: "+DEFAULT_PORT);
-                port = DEFAULT_PORT;
-            }
+        if (port > MAX_PORT || port < MAX_RESERVED) {
+            if (debug)
+                System.out.println("Invalide port, switching to default port: " + DEFAULT_PORT);
+            port = DEFAULT_PORT;
+        }
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             if (debug) {
                 System.out.println("Server started");
@@ -81,23 +81,23 @@ public class server {
     public String getRequest(Socket client) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(client.getInputStream()));
         StringBuilder requestBuilder = new StringBuilder();
- 
-        int contentLength=-1;
+
+        int contentLength = -1;
         String line;
         while (!(line = br.readLine()).isEmpty()) {
-            if(line.contains("Content-Length"))
-            contentLength = Integer.parseInt(line.split(" ")[1]);
+            if (line.contains("Content-Length"))
+                contentLength = Integer.parseInt(line.split(" ")[1]);
             requestBuilder.append(line + "\r\n");
-            
+
         }
-        if(contentLength>0){
+        if (contentLength > 0) {
             char[] charArray = new char[contentLength];
             br.read(charArray, 0, contentLength);
-            requestBuilder.append("\r\n"+new String(charArray)+ "\r\n");
+            requestBuilder.append("\r\n" + new String(charArray) + "\r\n");
         }
-        
+
         return requestBuilder.toString();
-      
+
     }
 
     public void handleClient(String method, Socket client, String request) throws IOException {

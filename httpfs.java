@@ -1,18 +1,10 @@
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.Socket;
 
 public class httpfs extends server {
-
-    public enum RequestType {
-        GET,
-        POST
-    }
 
     private static final String DEFAULT_DIRECTORY = System.getProperty("user.dir");
     private static String directory;
@@ -20,14 +12,16 @@ public class httpfs extends server {
     private static boolean dPresent = false;
     private static boolean pPresent = false;
 
-
     public httpfs(int port, boolean debug, String directory) {
         super(port, debug);
         httpfs.directory = directory;
     }
+
+
     public httpfs(int port, boolean debug) {
         this(port, debug, DEFAULT_DIRECTORY);
     }
+
     public httpfs(int port) {
         this(port, false, DEFAULT_DIRECTORY);
     }
@@ -141,7 +135,7 @@ public class httpfs extends server {
         if (!httpLibrary.isSubDirectory(root, file)) {
             if (isDebug())
                 System.out.println(httpResponse.FORBIDDEN_ACCESS_ATTEMPT);
-            sendResponse(client,  httpResponse.FORBIDDEN_403, httpResponse.ACCESS_DENIED);
+            sendResponse(client, httpResponse.FORBIDDEN_403, httpResponse.ACCESS_DENIED);
             return;
         }
 
@@ -199,7 +193,12 @@ public class httpfs extends server {
         String[] requestsLines = request.split("\r\n\r\n");
         body = requestsLines[1];
         System.out.println(body);
-     
+
         return body;
+    }
+
+    public enum RequestType {
+        GET,
+        POST
     }
 }

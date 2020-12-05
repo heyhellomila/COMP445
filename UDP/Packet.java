@@ -12,6 +12,12 @@ import java.nio.ByteOrder;
  */
 public class Packet {
 
+    public static final int DATA = 0;
+    public static final int ACK = 1;
+    public static final int SYN = 2;
+    public static final int SYN_ACK = 3;
+    public static final int NAK = 4;
+
     public static final int MIN_LEN = 11;
     public static final int MAX_LEN = 1024;
 
@@ -28,6 +34,40 @@ public class Packet {
         this.peerAddress = peerAddress;
         this.peerPort = peerPort;
         this.payload = payload;
+    }
+
+    /**
+     * fromBuffer creates a packet from the given ByteBuffer in BigEndian.
+     */
+    public static Packet fromBuffer(ByteBuffer buf) throws IOException {
+        if (buf.limit() < MIN_LEN || buf.limit() > MAX_LEN) {
+            throw new IOException("Invalid length");
+        }
+
+        Builder builder = new Builder();
+
+        builder.setType(Byte.toUnsignedInt(buf.get()));
+        builder.setSequenceNumber(Integer.toUnsignedLong(buf.getInt()));
+
+        byte[] host = new byte[]{buf.get(), buf.get(), buf.get(), buf.get()};
+        builder.setPeerAddress(Inet4Address.getByAddress(host));
+        builder.setPortNumber(Short.toUnsignedInt(buf.getShort()));
+
+        byte[] payload = new byte[buf.remaining()];
+        buf.get(payload);
+        builder.setPayload(payload);
+
+        return builder.create();
+    }
+
+    /**
+     * fromBytes creates a packet from the given array of bytes.
+     */
+    public static Packet fromBytes(byte[] bytes) throws IOException {
+        ByteBuffer buf = ByteBuffer.allocate(MAX_LEN).order(ByteOrder.BIG_ENDIAN);
+        buf.put(bytes);
+        buf.flip();
+        return fromBuffer(buf);
     }
 
     public int getType() {
@@ -54,7 +94,7 @@ public class Packet {
      * Creates a builder from the current packet.
      * It's used to create another packet by re-using some parts of the current packet.
      */
-    public Builder toBuilder(){
+    public Builder toBuilder() {
         return new Builder()
                 .setType(type)
                 .setSequenceNumber(sequenceNumber)
@@ -94,40 +134,6 @@ public class Packet {
         byte[] raw = new byte[buf.remaining()];
         buf.get(raw);
         return raw;
-    }
-
-    /**
-     * fromBuffer creates a packet from the given ByteBuffer in BigEndian.
-     */
-    public static Packet fromBuffer(ByteBuffer buf) throws IOException {
-        if (buf.limit() < MIN_LEN || buf.limit() > MAX_LEN) {
-            throw new IOException("Invalid length");
-        }
-
-        Builder builder = new Builder();
-
-        builder.setType(Byte.toUnsignedInt(buf.get()));
-        builder.setSequenceNumber(Integer.toUnsignedLong(buf.getInt()));
-
-        byte[] host = new byte[]{buf.get(), buf.get(), buf.get(), buf.get()};
-        builder.setPeerAddress(Inet4Address.getByAddress(host));
-        builder.setPortNumber(Short.toUnsignedInt(buf.getShort()));
-
-        byte[] payload = new byte[buf.remaining()];
-        buf.get(payload);
-        builder.setPayload(payload);
-
-        return builder.create();
-    }
-
-    /**
-     * fromBytes creates a packet from the given array of bytes.
-     */
-    public static Packet fromBytes(byte[] bytes) throws IOException {
-        ByteBuffer buf = ByteBuffer.allocate(MAX_LEN).order(ByteOrder.BIG_ENDIAN);
-        buf.put(bytes);
-        buf.flip();
-        return fromBuffer(buf);
     }
 
     @Override
